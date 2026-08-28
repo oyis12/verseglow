@@ -1,0 +1,100 @@
+env: load .env
+env: export EXPO_PUBLIC_API_URL EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+
+{
+  name: [32m'Daily Insight'[39m,
+  slug: [32m'daily-insight'[39m,
+  version: [32m'1.0.0'[39m,
+  orientation: [32m'portrait'[39m,
+  icon: [32m'./assets/images/icon.png'[39m,
+  scheme: [32m'dailyinsight'[39m,
+  userInterfaceStyle: [32m'automatic'[39m,
+  plugins: [
+    [32m'expo-router'[39m,
+    [
+      [32m'expo-splash-screen'[39m,
+      {
+        backgroundColor: [32m'#F8F3E9'[39m,
+        image: [32m'./assets/splash/DailyInsight-light.png'[39m,
+        imageWidth: [33m180[39m,
+        resizeMode: [32m'contain'[39m,
+        dark: {
+          image: [32m'./assets/splash/DailyInsight-dark.png'[39m,
+          backgroundColor: [32m'#17181C'[39m
+        }
+      }
+    ],
+    [32m'expo-localization'[39m,
+    [32m'expo-sharing'[39m,
+    [32m'expo-image'[39m,
+    [
+      [32m'@react-native-google-signin/google-signin'[39m,
+      {
+        iosUrlScheme: [32m'com.googleusercontent.apps.YOUR_IOS_CLIENT_ID'[39m
+      }
+    ],
+    [
+      [32m'react-native-google-mobile-ads'[39m,
+      {
+        androidAppId: [32m'ca-app-pub-3940256099942544~3347511713'[39m,
+        iosAppId: [32m'ca-app-pub-3940256099942544~1458002511'[39m
+      }
+    ],
+    [
+      [32m'expo-media-library'[39m,
+      {
+        photosPermission: [32m'Allow Daily Insight to access your photos.'[39m,
+        savePhotosPermission: [32m'Allow Daily Insight to save your styled verse cards to your photo gallery.'[39m,
+        isAccessMediaLocationEnabled: [33mfalse[39m
+      }
+    ],
+    [
+      [32m'expo-notifications'[39m,
+      {
+        icon: [32m'./assets/images/android-icon-foreground.png'[39m,
+        color: [32m'#F08A45'[39m
+      }
+    ]
+  ],
+  description: [90mundefined[39m,
+  sdkVersion: [32m'57.0.0'[39m,
+  platforms: [
+    [32m'ios'[39m,
+    [32m'android'[39m,
+    [32m'web'[39m
+  ],
+  ios: {
+    icon: [32m'./assets/expo.icon'[39m
+  },
+  android: {
+    package: [32m'com.za.dailyinsight'[39m,
+    predictiveBackGestureEnabled: [33mfalse[39m,
+    permissions: [
+      [32m'android.permission.READ_EXTERNAL_STORAGE'[39m,
+      [32m'android.permission.WRITE_EXTERNAL_STORAGE'[39m,
+      [32m'android.permission.READ_MEDIA_VISUAL_USER_SELECTED'[39m,
+      [32m'android.permission.READ_MEDIA_IMAGES'[39m,
+      [32m'android.permission.READ_MEDIA_VIDEO'[39m,
+      [32m'android.permission.READ_MEDIA_AUDIO'[39m
+    ],
+    adaptiveIcon: {
+      foregroundImage: [32m'./assets/images/android-icon-foreground.png'[39m,
+      backgroundColor: [32m'#F8F3E9'[39m
+    }
+  },
+  web: {
+    output: [32m'static'[39m,
+    favicon: [32m'./assets/images/favicon.png'[39m
+  },
+  experiments: {
+    typedRoutes: [33mtrue[39m,
+    reactCompiler: [33mtrue[39m
+  },
+  extra: {
+    router: {},
+    eas: {
+      projectId: [32m'e57c1cdf-ba7b-4ed0-818b-7d2448f9c0b6'[39m
+    }
+  }
+}
+

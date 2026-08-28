@@ -1,0 +1,97 @@
+{
+  "expo": {
+    "name": "Daily Insight",
+    "slug": "daily-insight",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "dailyinsight",
+    "userInterfaceStyle": "automatic",
+
+    "ios": {
+      "icon": "./assets/expo.icon"
+    },
+
+    "android": {
+      "package": "com.za.dailyinsight",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundColor": "#F8F3E9"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+
+    "plugins": [
+      "expo-router",
+
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F8F3E9",
+          "image": "./assets/splash/DailyInsight-light.png",
+          "dark": {
+            "image": "./assets/splash/DailyInsight-dark.png",
+            "backgroundColor": "#17181C"
+          },
+          "imageWidth": 180,
+          "resizeMode": "contain"
+        }
+      ],
+
+      "expo-localization",
+
+      "expo-sharing",
+
+      "expo-image",
+
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.YOUR_IOS_CLIENT_ID"
+        }
+      ],
+
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ],
+
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Daily Insight to access your photos.",
+          "savePhotosPermission": "Allow Daily Insight to save your styled verse cards to your photo gallery.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ],
+
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-foreground.png",
+          "color": "#F08A45"
+        }
+      ]
+    ],
+
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e57c1cdf-ba7b-4ed0-818b-7d2448f9c0b6"
+      }
+    }
+  }
+}
