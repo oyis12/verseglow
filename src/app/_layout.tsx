@@ -80,6 +80,14 @@ export default function RootLayout() {
             gestureEnabled: true,
           }}
         />
+        <Stack.Screen
+          name="notifications"
+          options={{
+            presentation: "modal",
+            animation: "slide_from_bottom",
+            gestureEnabled: true,
+          }}
+        />
       </Stack>
     </NavigationThemeProvider>
   );
@@ -111,23 +119,10 @@ export default function RootLayout() {
 //   const { resolved, colors } = useAppTheme();
 
 //   useEffect(() => {
-//     const initializeApp = async () => {
-//       try {
-//         configureGoogleSignIn();
-
-//         const permissions = await Notifications.getPermissionsAsync();
-
-//         if (!permissions.granted) {
-//           await Notifications.requestPermissionsAsync();
-//         }
-//       } catch (error) {
-//         console.warn("Notification initialization failed:", error);
-//       } finally {
-//         SplashScreen.hide();
-//       }
-//     };
-
-//     initializeApp();
+//     configureGoogleSignIn();
+//     // Notifications.requestPermissionsAsync().catch(() => {
+//     // });
+//     SplashScreen.hide();
 //   }, []);
 
 //   const navigationTheme = resolved === "dark" ? DarkTheme : DefaultTheme;
@@ -149,19 +144,13 @@ export default function RootLayout() {
 //       <Stack
 //         screenOptions={{
 //           headerShown: false,
-//           contentStyle: {
-//             backgroundColor: colors.background,
-//           },
+//           contentStyle: { backgroundColor: colors.background },
 //         }}
 //       >
 //         <Stack.Screen name="index" />
-
 //         <Stack.Screen name="onboarding" />
-
 //         <Stack.Screen name="sign-in" />
-
 //         <Stack.Screen name="(tabs)" />
-
 //         <Stack.Screen
 //           name="verse-selector"
 //           options={{
@@ -170,7 +159,6 @@ export default function RootLayout() {
 //             gestureEnabled: true,
 //           }}
 //         />
-
 //         <Stack.Screen
 //           name="designer"
 //           options={{
@@ -179,7 +167,6 @@ export default function RootLayout() {
 //             gestureEnabled: true,
 //           }}
 //         />
-
 //         <Stack.Screen
 //           name="subscription"
 //           options={{
