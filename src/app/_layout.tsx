@@ -10,6 +10,8 @@ import { useEffect } from "react";
 
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { configureGoogleSignIn } from "@/services/auth-service";
+import { registerPushToken } from "@/services/push-token-service";
+import { useAuthStore } from "@/store/auth-store";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -24,10 +26,28 @@ export default function RootLayout() {
   const { resolved, colors } = useAppTheme();
 
   useEffect(() => {
-    configureGoogleSignIn();
-    // Notifications.requestPermissionsAsync().catch(() => {
-    // });
-    SplashScreen.hide();
+    const initializeApp = async () => {
+      try {
+        configureGoogleSignIn();
+
+        const permissions = await Notifications.getPermissionsAsync();
+        if (!permissions.granted) {
+          await Notifications.requestPermissionsAsync();
+        }
+
+        // Returning users who are already signed in never pass through
+        // sign-in.tsx again, so register/refresh their push token here too.
+        if (useAuthStore.getState().isAuthenticated) {
+          registerPushToken().catch(() => {});
+        }
+      } catch (error) {
+        console.warn("App initialization failed:", error);
+      } finally {
+        SplashScreen.hide();
+      }
+    };
+
+    initializeApp();
   }, []);
 
   const navigationTheme = resolved === "dark" ? DarkTheme : DefaultTheme;
@@ -169,6 +189,14 @@ export default function RootLayout() {
 //         />
 //         <Stack.Screen
 //           name="subscription"
+//           options={{
+//             presentation: "modal",
+//             animation: "slide_from_bottom",
+//             gestureEnabled: true,
+//           }}
+//         />
+//         <Stack.Screen
+//           name="notifications"
 //           options={{
 //             presentation: "modal",
 //             animation: "slide_from_bottom",

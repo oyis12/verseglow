@@ -9,7 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  View
+  View,
 } from "react-native";
 import Animated, { FadeInRight, FadeOutLeft } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -87,14 +87,68 @@ export default function CreateInsightScreen() {
     bookOptions.find((item) => item.value === bookId)?.label ?? "Genesis";
 
   const [adRewardErrorVisible, setAdRewardErrorVisible] = useState(false);
-  const { isLoaded: adLoaded, show: showRewardedAd } = useRewardedAd(() => {
-    usage
-      .redeemAdReward()
-      .then(() => {
-        performGeneration();
-      })
-      .catch(() => setAdRewardErrorVisible(true));
-  });
+  const [adSequenceStep, setAdSequenceStep] = useState<0 | 1 | 2>(0); // 0 = inactive
+  const [awaitingAdReload, setAwaitingAdReload] = useState(false);
+
+  const { isLoaded: adLoaded, show: showRewardedAd } = useRewardedAd(
+    () => {
+      // Earned-reward events just mark progress — the real state transition
+      // happens in onClosed below, once we know for certain the ad UI is
+      // actually gone (earned can fire slightly before the ad closes).
+    },
+    (wasEarned) => {
+      if (!wasEarned) {
+        // Skipped or closed early — stop the sequence, don't grant anything.
+        setAdSequenceStep(0);
+        setAwaitingAdReload(false);
+        return;
+      }
+      if (adSequenceStep === 1) {
+        // First ad done — automatically queue the second, no user tap needed.
+        setAdSequenceStep(2);
+        setAwaitingAdReload(true);
+      } else if (adSequenceStep === 2) {
+        // Both ads done — grant the real reward now.
+        setAdSequenceStep(0);
+        usage
+          .redeemAdReward()
+          .then(() => performGeneration())
+          .catch(() => setAdRewardErrorVisible(true));
+      }
+    },
+  );
+
+  // Waits for a genuine load-cycle (not just "still loaded from ad 1") before
+  // auto-firing the second ad, so we never call show() on an ad that hasn't
+  // actually finished closing yet.
+  useEffect(() => {
+    if (adSequenceStep !== 2) return;
+    if (!adLoaded) {
+      setAwaitingAdReload(true);
+      return;
+    }
+    if (adLoaded && awaitingAdReload) {
+      setAwaitingAdReload(false);
+      showRewardedAd();
+    }
+  }, [adSequenceStep, adLoaded, awaitingAdReload, showRewardedAd]);
+
+  // Safety net: if the second ad never finishes loading, don't leave the
+  // user stuck behind the blocking overlay forever.
+  useEffect(() => {
+    if (adSequenceStep !== 2 || !awaitingAdReload) return;
+    const timeout = setTimeout(() => {
+      setAdSequenceStep(0);
+      setAwaitingAdReload(false);
+      setAdRewardErrorVisible(true);
+    }, 20000);
+    return () => clearTimeout(timeout);
+  }, [adSequenceStep, awaitingAdReload]);
+
+  const startAdSequence = () => {
+    setAdSequenceStep(1);
+    showRewardedAd();
+  };
 
   useEffect(() => {
     usage.refresh();
@@ -188,7 +242,13 @@ export default function CreateInsightScreen() {
   const [dailyCapPromptVisible, setDailyCapPromptVisible] = useState(false);
 
   const performGeneration = async () => {
-    if (!usage.isPro && usage.freeGenerateCredits <= 0) {
+    // Read the store directly rather than the `usage` closure above — this
+    // function can run immediately after an ad reward resolves, before
+    // React has re-rendered this component with the updated credit count.
+    // Using the stale render snapshot here was causing a false "you're out
+    // of credits" re-prompt right after a reward had already been granted.
+    const freshUsage = useUsageStore.getState();
+    if (!freshUsage.isPro && freshUsage.freeGenerateCredits <= 0) {
       setCreditPromptVisible(true);
       return;
     }
@@ -469,17 +529,17 @@ export default function CreateInsightScreen() {
         title="You're out of free generations"
         body={
           adLoaded
-            ? "Watch a short ad to unlock 2 more, or upgrade to Pro for a much higher daily limit."
+            ? "Watch 2 short ads back-to-back to unlock 2 more, or upgrade to Pro for a much higher daily limit."
             : "Upgrade to Pro for a much higher daily limit, or wait a moment for an ad to load."
         }
         actions={[
           {
-            label: adLoaded ? "Watch ad" : "Loading ad…",
+            label: adLoaded ? "Watch 2 ads" : "Loading ad…",
             icon: "play",
             disabled: !adLoaded,
             onPress: () => {
               setCreditPromptVisible(false);
-              showRewardedAd();
+              startAdSequence();
             },
           },
           {
@@ -502,6 +562,35 @@ export default function CreateInsightScreen() {
         actions={[]}
         dismissLabel="Got it"
       />
+      {adSequenceStep > 0 && (
+        <View style={styles.adSequenceOverlay}>
+          <View
+            style={[styles.adSequenceCard, { backgroundColor: colors.surface }]}
+          >
+            <ActivityIndicator color={colors.primary} />
+            <Text style={[styles.adSequenceTitle, { color: colors.text }]}>
+              {adSequenceStep === 1 ? "Ad 1 of 2" : "Ad 2 of 2"}
+            </Text>
+            <Text style={[styles.adSequenceBody, { color: colors.textMuted }]}>
+              {adSequenceStep === 1
+                ? "Watch this ad, then the second one starts automatically."
+                : "Loading the second ad — it will start on its own."}
+            </Text>
+            <Pressable
+              onPress={() => {
+                setAdSequenceStep(0);
+                setAwaitingAdReload(false);
+              }}
+            >
+              <Text
+                style={[styles.adSequenceCancel, { color: colors.textMuted }]}
+              >
+                Cancel
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -864,6 +953,40 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   adLoadingHint: { fontFamily: fonts.sans, fontSize: 11 },
+  adSequenceOverlay: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.55)",
+  },
+  adSequenceCard: {
+    width: "78%",
+    borderRadius: radius.md,
+    padding: spacing.xl,
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  adSequenceTitle: {
+    fontFamily: fonts.serif,
+    fontSize: 22,
+    marginTop: spacing.sm,
+  },
+  adSequenceBody: {
+    fontFamily: fonts.sans,
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: "center",
+  },
+  adSequenceCancel: {
+    fontFamily: fonts.sans,
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: spacing.sm,
+  },
   header: {
     height: 64,
     paddingHorizontal: spacing.lg,

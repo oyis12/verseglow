@@ -15,7 +15,9 @@ const AD_UNIT_ID = __DEV__
 
 let ad = RewardedAd.createForAdRequest(AD_UNIT_ID);
 let isLoaded = false;
-let pendingCallback: (() => void) | null = null;
+let pendingOnEarned: (() => void) | null = null;
+let pendingOnClosed: ((wasEarned: boolean) => void) | null = null;
+let earnedThisShow = false;
 const loadedListeners = new Set<(loaded: boolean) => void>();
 
 function setLoaded(value: boolean) {
@@ -31,20 +33,41 @@ function load() {
 function attachListeners() {
   ad.addAdEventListener(RewardedAdEventType.LOADED, () => setLoaded(true));
   ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
-    pendingCallback?.();
-    pendingCallback = null;
+    earnedThisShow = true;
+    pendingOnEarned?.();
   });
   ad.addAdEventListener(AdEventType.CLOSED, () => {
-    // Whoever was waiting didn't earn a reward (closed early) — clear it so
-    // a stale callback can't fire later.
-    pendingCallback = null;
-    ad = RewardedAd.createForAdRequest(AD_UNIT_ID);
-    attachListeners();
-    load();
+    const wasEarned = earnedThisShow;
+    const onClosed = pendingOnClosed;
+    pendingOnEarned = null;
+    pendingOnClosed = null;
+    earnedThisShow = false;
+    setLoaded(false);
+    // Give the SDK a moment to fully tear down the just-closed ad before
+    // requesting the next one — loading immediately in this callback is a
+    // known way for the next ad to silently fail to load.
+    setTimeout(() => {
+      ad = RewardedAd.createForAdRequest(AD_UNIT_ID);
+      attachListeners();
+      load();
+    }, 500);
+    onClosed?.(wasEarned);
   });
   ad.addAdEventListener(AdEventType.ERROR, () => {
-    pendingCallback = null;
+    const onClosed = pendingOnClosed;
+    pendingOnEarned = null;
+    pendingOnClosed = null;
+    earnedThisShow = false;
     setLoaded(false);
+    onClosed?.(false);
+
+    // Recover from a failed load/show by creating a fresh ad instance.
+    // This prevents the next generation attempt from being stuck forever.
+    setTimeout(() => {
+      ad = RewardedAd.createForAdRequest(AD_UNIT_ID);
+      attachListeners();
+      load();
+    }, 500);
   });
 }
 
@@ -62,10 +85,21 @@ export function subscribeRewardedAdLoaded(listener: (loaded: boolean) => void) {
   };
 }
 
-/** Returns false immediately (no-op) if no ad is currently loaded. */
-export function showRewardedAd(onEarnedReward: () => void): boolean {
+/**
+ * Shows the ad. `onEarnedReward` fires when the reward is actually earned.
+ * `onClosed` fires once the ad UI is dismissed either way, telling the
+ * caller whether the reward was earned before it closed — needed to chain a
+ * second ad reliably instead of guessing from `onEarnedReward` alone.
+ * Returns false immediately (no-op) if no ad is currently loaded.
+ */
+export function showRewardedAd(
+  onEarnedReward: () => void,
+  onClosed?: (wasEarned: boolean) => void,
+): boolean {
   if (!isLoaded) return false;
-  pendingCallback = onEarnedReward;
+  earnedThisShow = false;
+  pendingOnEarned = onEarnedReward;
+  pendingOnClosed = onClosed ?? null;
   ad.show();
   return true;
 }

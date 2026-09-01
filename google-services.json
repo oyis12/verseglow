@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "918067943603",
+    "project_id": "ai-insight-504718",
+    "storage_bucket": "ai-insight-504718.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:918067943603:android:5d4e628ffe6bd20925b8c6",
+        "android_client_info": {
+          "package_name": "com.za.dailyinsight"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "918067943603-t2loegf22kej1vmbkd8ah6h7ne04irkj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbawO8eSFBcJ9cX42DXTM7-CZdXcVGiRw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "918067943603-t2loegf22kej1vmbkd8ah6h7ne04irkj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
